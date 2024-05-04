@@ -1,12 +1,6 @@
 const chatBody = document.getElementById("chatBody");
 var messageInput = document.getElementById("messageInput");
 var btnSend = document.getElementById("btnSend");
-var sekarang = new Date();
-var hari = getNamaHari(sekarang.getDay());
-var bulan = getNamaBulan(sekarang.getMonth());
-var tahun = sekarang.getFullYear();
-var jam = sekarang.getHours();
-var menit = sekarang.getMinutes(+1);
 
 function getNamaBulan(index) {
     const namaBulan = [
@@ -47,7 +41,7 @@ function showSign() {
     var cPopup = document.getElementById("contain-login");
     vLogin.style.display = "none";
     vSign.style.display = "flex";
-    cPopup.style.height = "570px";
+    cPopup.style.height = "590px";
 }
 function showLogin() {
     var vSign = document.getElementById("viewSign");
@@ -59,16 +53,23 @@ function showLogin() {
 }
 
 // checked popup
+const userId = localStorage.getItem('key');
+
 const lsHasLog = localStorage.getItem("hasLog");
 const divPopupSL = document.getElementById("popupLoginSign");
 if (lsHasLog) {
-    /* const usn = localStorage.getItem('usn');
+     const key = localStorage.getItem('key');
+     const usn = localStorage.getItem('usn');
     const pw = localStorage.getItem('pw');
     const role = localStorage.getItem('role');
     const bio = localStorage.getItem('bio');
     const ct = localStorage.getItem('contact');
     const color = localStorage.getItem('colorFav');
-  console.log('username:' + usn + ', pass:' + pw + ', role:' + role + ', bio:' + bio + ', contc:' + ct + color)*/
+  console.log('username:' + usn + ', pass:' + pw + ', role:' + role + ', bio:' + bio + ', contc:' + ct + ', color:' + color + ', key' + key)
+  document.addEventListener("DOMContentLoaded", () => { updateUserStatusOnline(userId)
+  window.addEventListener("beforeunload", (e) => { updateUserStatusOffline(userId)
+  })
+  })
     console.log("you are logged in");
 } else {
     divPopupSL.style.display = "flex";
@@ -94,6 +95,7 @@ function login() {
                 console.log(val);
                 if (val.username === usn.value && val.password === pw.value) {
                     localStorage.setItem("hasLog", true);
+                    localStorage.setItem("key", key);
                     localStorage.setItem("usn", usn.value);
                     localStorage.setItem("pw", pw.value);
                     localStorage.setItem("role", val.role);
@@ -125,6 +127,13 @@ function sendMessage() {
     }
     btnSend.innerHTML =
         '<div class="spinner-border text-light" role="status" style="width:20px;height:20px;"></div>';
+        
+var sekarang = new Date();
+var hari = getNamaHari(sekarang.getDay());
+var bulan = getNamaBulan(sekarang.getMonth());
+var tahun = sekarang.getFullYear();
+var jam = sekarang.getHours();
+var menit = sekarang.getMinutes();
     const usn = localStorage.getItem("usn");
     const pw = localStorage.getItem("pw");
     const role = localStorage.getItem("role");
@@ -169,8 +178,106 @@ function sendMessage() {
         });
 }
 
+const infoOnline = document.getElementById('info-online');
+const acBody = document.getElementById('accountBody');
+fetch(urlFb + 'account.json')
+.then(res=>res.json())
+.then(data=> {
+  let akunOn = 0;
+  let akunAll = 0;
+  for (let key in data) {
+   const val = data[key]
+   akunAll++;
+   if (val.status === 'online') {
+     akunOn++;
+   }
+   
+   var usn = val.username;
+   var contact = val.contact;
+   var status = val.status;
+   var src = val.profileImageUrl;
+   
+   const acc = document.createElement('div');
+   acc.innerHTML = `
+              <div class="w-100 d-flex rounded-2 text-dark py-2" style="padding-left:5%;background:#f9e5fc;height:55px;">
+                <img src="${src}" style="width:50px;border-radius:50%;" alt="">
+                <div class="d-flex px-2 flex-column" >
+                  <p class="m-0">${usn}</p>
+                  <p class="m-0">${contact}</p>
+                  <p class="m-0">• ${status}</p>
+                </p>
+              </div>
+            </div>
+   `;
+   acBody.appendChild(acc)
+  }
+   infoOnline.innerHTML= `${akunOn}/${akunAll} online`;
+})
+.catch(e => console.error(error.message))
+
+// Function to update user status to 'online'
+function updateUserStatusOnline(userId) {
+    // Endpoint URL to update user status
+    const endpointURL = `${urlFb}/account/${userId}.json`;
+
+    // Data to be sent
+    const newData = {
+        status: 'online'
+    };
+
+    // Fetch request with PATCH method to update user status to 'online'
+    fetch(endpointURL, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newData)
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log('User status updated to online.');
+        } else {
+            throw new Error('Failed to update user status.');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating user status:', error);
+    });
+}
+
+// Function to update user status to 'offline'
+function updateUserStatusOffline(userId) {
+    // Endpoint URL to update user status
+    const endpointURL = `${urlFb}/account/${userId}.json`;
+
+    // Data to be sent
+    const newData = {
+        status: 'offline'
+    };
+
+    // Fetch request with PATCH method to update user status to 'offline'
+    fetch(endpointURL, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newData)
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log('User status updated to offline.');
+        } else {
+            throw new Error('Failed to update user status.');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating user status:', error);
+    });
+}
+
 function logout() {
     localStorage.removeItem("hasLog");
+    localStorage.removeItem("key");
     localStorage.removeItem("usn");
     localStorage.removeItem("pw");
     localStorage.removeItem("role");
